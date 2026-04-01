@@ -64,28 +64,24 @@ export default function HeightMapApp() {
 }
 
 // Component xử lý bề mặt 3D
-function Surface({ points }: { points: number[][] }) {
+// Component xử lý bề mặt 3D (Phiên bản JavaScript thuần)
+function Surface({ points }) {
   const size = 3;
-  const meshRef = React.useRef<THREE.Mesh>(null);
+  const meshRef = React.useRef(null);
 
-  const { vertices, colors } = useMemo(() => {
-    const v: number[] = [];
-    const c: number[] = [];
+  const { vertices, colors } = React.useMemo(() => {
+    const v = [];
+    const c = [];
     const color = new THREE.Color();
 
-    // Duyệt qua mảng 3x3
     for (let i = 0; i < size; i++) {
       for (let j = 0; j < size; j++) {
         const h = points[i][j];
-        
-        // Tọa độ: X = j, Y = h (độ cao), Z = i
-        // Trừ đi 1 để căn giữa tâm (0,0)
         v.push(j - 1, h, i - 1);
         
-        // Logic màu sắc
-        if (h > 1) color.set('#ef4444');      // Cao: Đỏ
-        else if (h > 0) color.set('#facc15'); // Tương đối: Vàng
-        else color.set('#3b82f6');            // Phẳng: Xanh dương
+        if (h > 1) color.set('#ef4444');      
+        else if (h > 0) color.set('#facc15'); 
+        else color.set('#3b82f6');            
         
         c.push(color.r, color.g, color.b);
       }
@@ -94,14 +90,13 @@ function Surface({ points }: { points: number[][] }) {
       vertices: new Float32Array(v), 
       colors: new Float32Array(c) 
     };
-  }, [points]); // Khi points thay đổi, tính toán lại vertices
+  }, [points]);
 
-  // Cập nhật mesh khi dữ liệu thay đổi
   React.useEffect(() => {
     if (meshRef.current) {
       meshRef.current.geometry.attributes.position.needsUpdate = true;
       meshRef.current.geometry.attributes.color.needsUpdate = true;
-      meshRef.current.geometry.computeVertexNormals(); // Để ánh sáng đổ bóng đúng sau khi đổi hình dạng
+      meshRef.current.geometry.computeVertexNormals();
     }
   }, [vertices]);
 
