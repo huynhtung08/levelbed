@@ -48,7 +48,7 @@ export default function HeightMapApp() {
 
       {/* Vùng hiển thị 3D */}
       <div className="flex-1 relative cursor-move">
-        <Canvas shadows>
+        <Canvas shadows={{ type: THREE.PCFShadowMap }}>
           <PerspectiveCamera makeDefault position={[5, 5, 5]} />
           <OrbitControls />
           <ambientLight intensity={0.5} />
