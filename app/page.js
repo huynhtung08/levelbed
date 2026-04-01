@@ -64,50 +64,69 @@ export default function HeightMapApp() {
 }
 
 // Component xử lý bề mặt 3D
-function Surface({ points }) {
+function Surface({ points }: { points: number[][] }) {
   const size = 3;
-  const segments = size - 1;
+  const meshRef = React.useRef<THREE.Mesh>(null);
 
-  // Tạo vertices và colors dựa trên input
   const { vertices, colors } = useMemo(() => {
-    const v = [];
-    const c = [];
+    const v: number[] = [];
+    const c: number[] = [];
     const color = new THREE.Color();
 
+    // Duyệt qua mảng 3x3
     for (let i = 0; i < size; i++) {
       for (let j = 0; j < size; j++) {
-        const height = points[i][j];
-        // Tọa độ X, Y (độ cao), Z
-        v.push(j - 1, height, i - 1);
-
+        const h = points[i][j];
+        
+        // Tọa độ: X = j, Y = h (độ cao), Z = i
+        // Trừ đi 1 để căn giữa tâm (0,0)
+        v.push(j - 1, h, i - 1);
+        
         // Logic màu sắc
-        if (height > 1) color.set('#ef4444');      // Đỏ
-        else if (height > 0) color.set('#facc15'); // Vàng
-        else color.set('#3b82f6');                 // Xanh dương
+        if (h > 1) color.set('#ef4444');      // Cao: Đỏ
+        else if (h > 0) color.set('#facc15'); // Tương đối: Vàng
+        else color.set('#3b82f6');            // Phẳng: Xanh dương
         
         c.push(color.r, color.g, color.b);
       }
     }
-    return { vertices: new Float32Array(v), colors: new Float32Array(c) };
-  }, [points]);
+    return { 
+      vertices: new Float32Array(v), 
+      colors: new Float32Array(c) 
+    };
+  }, [points]); // Khi points thay đổi, tính toán lại vertices
+
+  // Cập nhật mesh khi dữ liệu thay đổi
+  React.useEffect(() => {
+    if (meshRef.current) {
+      meshRef.current.geometry.attributes.position.needsUpdate = true;
+      meshRef.current.geometry.attributes.color.needsUpdate = true;
+      meshRef.current.geometry.computeVertexNormals(); // Để ánh sáng đổ bóng đúng sau khi đổi hình dạng
+    }
+  }, [vertices]);
 
   return (
-    <mesh rotation={[0, 0, 0]} receiveShadow castShadow>
-      <planeGeometry args={[2, 2, segments, segments]}>
-        <bufferAttribute
-          attach="attributes-position"
-          count={vertices.length / 3}
-          array={vertices}
-          itemSize={3}
+    <mesh ref={meshRef}>
+      <planeGeometry args={[2, 2, 2, 2]}>
+        <bufferAttribute 
+          attach="attributes-position" 
+          count={vertices.length / 3} 
+          array={vertices} 
+          itemSize={3} 
         />
-        <bufferAttribute
-          attach="attributes-color"
-          count={colors.length / 3}
-          array={colors}
-          itemSize={3}
+        <bufferAttribute 
+          attach="attributes-color" 
+          count={colors.length / 3} 
+          array={colors} 
+          itemSize={3} 
         />
       </planeGeometry>
-      <meshStandardMaterial vertexColors wireframe={false} side={THREE.DoubleSide} flatShading />
+      <meshStandardMaterial 
+        vertexColors 
+        side={THREE.DoubleSide} 
+        flatShading 
+        roughness={0.3} 
+      />
     </mesh>
   );
 }
